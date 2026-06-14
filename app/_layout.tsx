@@ -7,6 +7,8 @@ import { ActivityIndicator, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
+import { DownloadsProvider } from '../src/context/DownloadsContext';
+import { FavoritesProvider } from '../src/context/FavoritesContext';
 import { PlayerProvider } from '../src/context/PlayerContext';
 import { colors } from '../src/constants/theme';
 
@@ -38,6 +40,8 @@ function RootNavigator() {
         <Stack.Screen name="artists" options={{ title: 'Artistas' }} />
         <Stack.Screen name="albums" options={{ title: 'Álbumes' }} />
         <Stack.Screen name="playlists" options={{ title: 'Playlists' }} />
+        <Stack.Screen name="favorites" options={{ title: 'Favoritos' }} />
+        <Stack.Screen name="downloads" options={{ title: 'Descargas' }} />
         <Stack.Screen
           name="player"
           options={{ presentation: 'modal', headerShown: false, animation: 'slide_from_bottom' }}
@@ -56,10 +60,14 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AuthProvider>
-          <PlayerProvider>
-            <StatusBar style="light" />
-            <RootNavigator />
-          </PlayerProvider>
+          <FavoritesProvider>
+            <DownloadsProvider>
+              <PlayerProvider>
+                <StatusBar style="light" />
+                <RootNavigator />
+              </PlayerProvider>
+            </DownloadsProvider>
+          </FavoritesProvider>
         </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

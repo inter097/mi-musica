@@ -155,12 +155,29 @@ export class SubsonicClient {
     });
     return data.searchResult3;
   }
+
+  async star(id: string): Promise<void> {
+    await this.request('star.view', { id });
+  }
+
+  async unstar(id: string): Promise<void> {
+    await this.request('unstar.view', { id });
+  }
+
+  async getStarred2(): Promise<SearchResult3> {
+    const data = await this.request<{ starred2: SearchResult3 }>('getStarred2.view');
+    return {
+      artist: data.starred2.artist ?? [],
+      album: data.starred2.album ?? [],
+      song: data.starred2.song ?? [],
+    };
+  }
 }
 
-export function songToStreamableTrack(client: SubsonicClient, song: SubsonicSong) {
+export function songToStreamableTrack(client: SubsonicClient, song: SubsonicSong, localUri?: string) {
   return {
     id: song.id,
-    url: client.getStreamUrl(song.id),
+    url: localUri ?? client.getStreamUrl(song.id),
     title: song.title,
     artist: song.artist ?? 'Desconocido',
     album: song.album,

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { songToStreamableTrack } from '../../src/api/subsonic';
 import { AlbumCard } from '../../src/components/AlbumCard';
 import { ArtistCard } from '../../src/components/ArtistCard';
@@ -9,6 +9,8 @@ import { Screen } from '../../src/components/Screen';
 import { SectionHeader } from '../../src/components/SectionHeader';
 import { TrackRow } from '../../src/components/TrackRow';
 import { useAuth } from '../../src/context/AuthContext';
+import { useDownloads } from '../../src/context/DownloadsContext';
+import { useFavorites } from '../../src/context/FavoritesContext';
 import { usePlayer } from '../../src/context/PlayerContext';
 import { colors, fontSize, radius, spacing } from '../../src/constants/theme';
 import type { SearchResult3 } from '../../src/types/subsonic';
@@ -16,6 +18,8 @@ import type { SearchResult3 } from '../../src/types/subsonic';
 export default function SearchScreen() {
   const { client } = useAuth();
   const { playQueue } = usePlayer();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const { isDownloaded, progress, getLocalUri, download } = useDownloads();
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [result, setResult] = useState<SearchResult3 | null>(null);
@@ -119,8 +123,20 @@ export default function SearchScreen() {
                   duration={song.duration}
                   onPress={() => {
                     if (!client || !result.song) return;
-                    playQueue(result.song.map((s) => songToStreamableTrack(client, s)), index);
+                    playQueue(
+                      result.song.map((s) => songToStreamableTrack(client, s, getLocalUri(s.id))),
+                      index
+                    );
                   }}
+                  isFavorite={isFavorite(song.id)}
+                  onToggleFavorite={() => toggleFavorite(song)}
+                  downloaded={isDownloaded(song.id)}
+                  downloadProgress={progress[song.id]}
+                  onDownload={() =>
+                    download(song).catch(() =>
+                      Alert.alert('Error', 'No se pudo descargar la canción. Intenta de nuevo.')
+                    )
+                  }
                 />
               ))}
             </View>

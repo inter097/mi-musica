@@ -1,17 +1,24 @@
 import { useRouter } from 'expo-router';
 import React, { useMemo } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { songToStreamableTrack } from '../../src/api/subsonic';
 import { AlbumCard } from '../../src/components/AlbumCard';
 import { ArtistCard } from '../../src/components/ArtistCard';
 import { Screen } from '../../src/components/Screen';
 import { SectionHeader } from '../../src/components/SectionHeader';
 import { useAuth } from '../../src/context/AuthContext';
+import { useDownloads } from '../../src/context/DownloadsContext';
+import { useFavorites } from '../../src/context/FavoritesContext';
+import { usePlayer } from '../../src/context/PlayerContext';
 import { useSubsonicQuery } from '../../src/hooks/useSubsonicQuery';
 import { colors, fontSize, spacing } from '../../src/constants/theme';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { client } = useAuth();
+  const { playQueue } = usePlayer();
+  const { favoriteSongs } = useFavorites();
+  const { getLocalUri } = useDownloads();
 
   const albums = useSubsonicQuery((c) => c.getAlbumList2('newest', 15));
   const artists = useSubsonicQuery((c) => c.getArtists());
@@ -74,6 +81,29 @@ export default function HomeScreen() {
                   name={artist.name}
                   coverUrl={client?.getCoverArtUrl(artist.coverArt)}
                   onPress={() => router.push(`/artist/${artist.id}`)}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {favoriteSongs.length > 0 && (
+          <View style={styles.section}>
+            <SectionHeader title="Favoritos" onPressSeeAll={() => router.push('/favorites')} />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+              {favoriteSongs.map((song, index) => (
+                <AlbumCard
+                  key={song.id}
+                  title={song.title}
+                  subtitle={song.artist}
+                  coverUrl={client?.getCoverArtUrl(song.coverArt)}
+                  onPress={() => {
+                    if (!client) return;
+                    playQueue(
+                      favoriteSongs.map((s) => songToStreamableTrack(client, s, getLocalUri(s.id))),
+                      index
+                    );
+                  }}
                 />
               ))}
             </ScrollView>

@@ -45,6 +45,7 @@ export interface SubsonicSong {
   contentType?: string;
   isDir?: boolean;
   type?: string;
+  starred?: string;
 }
 
 export interface SubsonicPlaylist {
