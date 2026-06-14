@@ -2,13 +2,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { useEffect } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text } from 'react-native';
 import { useActiveTrack } from 'react-native-track-player';
 import { songToStreamableTrack } from '../../src/api/subsonic';
 import { CoverImage } from '../../src/components/CoverImage';
 import { Screen } from '../../src/components/Screen';
 import { TrackRow } from '../../src/components/TrackRow';
 import { useAuth } from '../../src/context/AuthContext';
+import { useDownloads } from '../../src/context/DownloadsContext';
+import { useFavorites } from '../../src/context/FavoritesContext';
 import { usePlayer } from '../../src/context/PlayerContext';
 import { useSubsonicQuery } from '../../src/hooks/useSubsonicQuery';
 import { colors, fontSize, spacing } from '../../src/constants/theme';
@@ -17,6 +19,8 @@ export default function PlaylistScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { client } = useAuth();
   const { playQueue } = usePlayer();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const { isDownloaded, progress, getLocalUri, download } = useDownloads();
   const navigation = useNavigation();
   const activeTrack = useActiveTrack();
 
@@ -39,7 +43,10 @@ export default function PlaylistScreen() {
 
   const playAll = (startIndex = 0) => {
     if (!client) return;
-    playQueue(songs.map((song) => songToStreamableTrack(client, song)), startIndex);
+    playQueue(
+      songs.map((song) => songToStreamableTrack(client, song, getLocalUri(song.id))),
+      startIndex
+    );
   };
 
   return (
@@ -68,6 +75,15 @@ export default function PlaylistScreen() {
             duration={item.duration}
             active={activeTrack?.id === item.id}
             onPress={() => playAll(index)}
+            isFavorite={isFavorite(item.id)}
+            onToggleFavorite={() => toggleFavorite(item)}
+            downloaded={isDownloaded(item.id)}
+            downloadProgress={progress[item.id]}
+            onDownload={() =>
+              download(item).catch(() =>
+                Alert.alert('Error', 'No se pudo descargar la canción. Intenta de nuevo.')
+              )
+            }
           />
         )}
       />
